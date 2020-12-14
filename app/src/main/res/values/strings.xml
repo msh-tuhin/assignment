@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">FieldBuzzAssignment</string>
+    <string name="username_hint">Username/Email</string>
+    <string name="password_hint">Password</string>
+    <string name="name_hint">Name</string>
+    <string name="email_hint">Email</string>
+    <string name="phone_hint">Phone</string>
+    <string name="address_hint">Full Address</string>
+    <string name="university_name_hint">Name of University</string>
+    <string name="graduation_year_hint">Graduation Year</string>
+    <string name="cgpa_hint">CGPA</string>
+    <string name="experience_hint">Experience in months</string>
+    <string name="current_work_place_name_hint">Current Work Place</string>
+    <string name="expected_salary_hint">Expected Salary</string>
+    <string name="fieldbuzz_reference_hint">FieldBuzz Reference</string>
+    <string name="github_url_hint">Github Project URL</string>
+
+    <string name="signIn_button_label">Sign In</string>
+    <string name="username_password_wrong">Username or password is wrong!</string>
+
+    <string name="signIn_progress_text">Sit tight! Signing In…</string>
+    <string name="user_data_submit_button_label">Submit Data</string>
+
+    <string name="data_upload_progress_text">Uploading data…</string>
+    <string name="file_upload_progress_text">Data upload successful!\nUploading CV file…</string>
+
+    <string name="form_header">Please fill the following data</string>
+    <string name="job_position_form_field_text">Applying In:</string>
+
+    <string name="field_required_error_msg">This field is required</string>
+    <string name="invalid_email_error_msg">Please type a valid email</string>
+    <string name="invalid_grad_year_error_msg">Graduation year should be a whole number in [2015, 2020]</string>
+    <string name="cgpa_error_msg">CGPA should be in [2.0, 4.0]</string>
+    <string name="experience_error_msg">Experience should be a whole number in [0, 100]</string>
+    <string name="expected_salary_error_msg">Expected Salary should be a whole number in [15000, 60000]</string>
+    <string name="github_url_error_msg">Please type a valid URL</string>
+    <string name="cv_missing_error_msg">CV file(pdf) must be selected</string>
+    <string name="cv_selection_error_msg">Oops! Could not select file. Please try again.</string>
+    <string name="cv_file_exceed_size">CV file(pdf) size must not be greater than 4 MB</string>
+
+    <string name="cv_file_label">CV file: </string>
+    <string name="ask_cv_file">Please Select CV \n less than 4 MB</string>
+    <string name="image_button_description">Remove CV file</string>
+
+    <string name="person_tsync_id_sp">person_tsync_id</string>
+    <string name="file_tsync_id_sp">file_tsync_id</string>
+    <string name="creation_time_sp">creation_time</string>
+
+    <string name="file_upload_success">Congratulations! File Upload Successful</string>
+    <string name="file_upload_failed">Oops! File Upload Failed</string>
+    <string name="data_upload_failed">Oops! Data Upload Failed</string>
+    <string name="login_failed">Login Failed</string>
+</resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="HintText" parent="TextAppearance.Design.Hint">
+        <item name="android:textColor">#000000</item>
+    </style>
+
+    <style name="paddingLeftRight24">
+        <item name="android:paddingLeft">24dp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingRight">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+    </style>
+
+    <style name="padding24" parent="paddingLeftRight24">
+        <item name="android:paddingTop">24dp</item>
+        <item name="android:paddingBottom">24dp</item>
+    </style>
+
+    <style name="formHeaderText" parent="TextAppearance.AppCompat.Headline">
+        <item name="android:textColor">#0000ff</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="formFieldText" parent="TextAppearance.AppCompat.Large">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="CVFileName" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#0000ff</item>
+    </style>
+
+    <style name="progressText" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#00aa00</item>
+    </style>
+
+</resources>
