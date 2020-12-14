@@ -16,8 +16,8 @@ public interface APIInterface {
     Call<TokenResponse> getAuthenticationToken(@Body UserCredentials userCredentials);
 
     // testing api
-    @POST("/api/v0/recruiting-entities/")
-    // @POST("/api/v1/recruiting-entities/")
+    // @POST("/api/v0/recruiting-entities/")
+    @POST("/api/v1/recruiting-entities/")
     Call<PayloadResponse> sendPayload(@Header("Authorization") String token, @Body Payload payload);
 
     @Multipart
