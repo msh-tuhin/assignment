@@ -13,11 +13,9 @@ import java.util.UUID;
 public class UniqueID {
 
     private Context mContext;
-    private UniqueIDTypes type;
 
-    public UniqueID(@NonNull Context context, @NonNull UniqueIDTypes type){
+    public UniqueID(@NonNull Context context){
         this.mContext = context;
-        this.type = type;
     }
 
     public static String getUniqueIDFromString(String string){
@@ -28,8 +26,8 @@ public class UniqueID {
         return uuidString;
     }
 
-    public String getUniqueID(){
-        SharedPreferences sharedPreferences = mContext.getSharedPreferences(getSharedPreferenceKey(), Context.MODE_PRIVATE);
+    public String getUniqueID(UniqueIDTypes type){
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences(getSharedPreferenceKey(type), Context.MODE_PRIVATE);
         String NOT_FOUND = "tsync_id not found";
         String idKey = "id";
         String uuidString = sharedPreferences.getString(idKey, NOT_FOUND);
@@ -42,7 +40,7 @@ public class UniqueID {
         return uuidString;
     }
 
-    private String getSharedPreferenceKey(){
+    private String getSharedPreferenceKey(UniqueIDTypes type){
         String key = null;
         switch (type){
             case PERSON:
@@ -63,11 +61,4 @@ public class UniqueID {
         this.mContext = mContext;
     }
 
-    public UniqueIDTypes getType() {
-        return type;
-    }
-
-    public void setType(UniqueIDTypes type) {
-        this.type = type;
-    }
 }

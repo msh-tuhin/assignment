@@ -364,8 +364,8 @@ public class DataInputActivity extends AppCompatActivity {
     private Payload getPayload(){
         Payload payload = new Payload();
 
-        UniqueID uniqueID = new UniqueID(this, UniqueIDTypes.PERSON);
-        payload.setTsyncId(uniqueID.getUniqueID());
+        UniqueID uniqueID = new UniqueID(this);
+        payload.setTsyncId(uniqueID.getUniqueID(UniqueIDTypes.PERSON));
 
         payload.setName(nameTextInputEditText.getText().toString());
         payload.setEmail(emailTextInputEditText.getText().toString());
@@ -382,8 +382,7 @@ public class DataInputActivity extends AppCompatActivity {
         payload.setGithubProjectUrl(githubURLTextInputEditText.getText().toString());
 
         CvFile cv_file = new CvFile();
-        uniqueID.setType(UniqueIDTypes.CV_FILE);
-        cv_file.setTsyncId(uniqueID.getUniqueID());
+        cv_file.setTsyncId(uniqueID.getUniqueID(UniqueIDTypes.CV_FILE));
 
         payload.setCvFile(cv_file);
         payload.setOnSpotCreationTime(getCreationTime());
