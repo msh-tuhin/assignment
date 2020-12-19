@@ -140,6 +140,8 @@ public class MainActivity extends AppCompatActivity {
         return userCredentials;
     }
 
+    /* called when the login api call returns a response without a token
+    *  there was a problem with the provided user credentials  */
     private void handleBadRequest(Response<TokenResponse> response){
         progressLinearLayout.setVisibility(View.GONE);
         inputLinearLayout.setVisibility(View.VISIBLE);
