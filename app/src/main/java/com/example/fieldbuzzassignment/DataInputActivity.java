@@ -153,6 +153,29 @@ public class DataInputActivity extends AppCompatActivity {
         attachFocusChangedListeners();
     }
 
+    public void viewClicked(View view) {
+        if(view.getId() == R.id.submit_button){
+            boolean areInputsValid = validateInputs();
+            if(areInputsValid){
+                showProgressLayout(R.string.data_upload_progress_text);
+                sendPayload(token);
+            }
+        } else if(view.getId() == R.id.cv_file_nameTV){
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED){
+                // Permission not available
+                // ask for permission
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        READ_EXTERNAL_STORAGE_PERM_CODE);
+            } else{
+                // permission available
+                startCVChooseActivity();
+            }
+        } else if(view.getId() == R.id.remove_file_imageButton){
+            removeCVNameAndImageButton();
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -190,6 +213,85 @@ public class DataInputActivity extends AppCompatActivity {
         }
     }
 
+    private void bindSpinner(Spinner spinner, int stringArrayResId){
+        String[] jobRoles = getResources().getStringArray(stringArrayResId);
+        ArrayAdapter<String> jobRolesAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_dropdown_item, jobRoles);
+
+        spinner.setAdapter(jobRolesAdapter);
+    }
+
+    private void attachTextChangedListeners(){
+
+        /* attach textChangedListeners to all TextInputEditTexts
+         * except those which are not required and does not need
+         * further validation if provided */
+
+        attachTextChangedListener(nameTextInputEditText, nameTextInputLayout, new NameValidator());
+        attachTextChangedListener(emailTextInputEditText, emailTextInputLayout, new EmailValidator());
+        attachTextChangedListener(phoneTextInputEditText, phoneTextInputLayout, new PhoneValidator());
+        attachTextChangedListener(universityNameTextInputEditText, universityNameTextInputLayout, new UniversityNameValidator());
+        attachTextChangedListener(graduationYearTextInputEditText, graduationYearTextInputLayout, new GraduationYearValidator());
+        attachTextChangedListener(cgpaTextInputEditText, cgpaTextInputLayout, new CGPAValidator());
+        attachTextChangedListener(experienceTextInputEditText, experienceTextInputLayout, new ExperienceValidator());
+        attachTextChangedListener(expectedSalaryTextInputEditText, expectedSalaryTextInputLayout, new ExpectedSalaryValidator());
+        attachTextChangedListener(githubURLTextInputEditText, githubURLTextInputLayout, new GithubURLValidator());
+    }
+
+    private void attachTextChangedListener(TextInputEditText textInputEditText,
+                                           TextInputLayout textInputLayout,
+                                           IInputValidator inputValidator){
+        textInputEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String input = s.toString();
+                validateField(input, textInputLayout, inputValidator);
+            }
+        });
+    }
+
+    private void attachFocusChangedListeners(){
+
+        /* call attachFocusChangedListener for required fields */
+
+        attachFocusChangedListener(nameTextInputEditText, nameTextInputLayout);
+        attachFocusChangedListener(emailTextInputEditText, emailTextInputLayout);
+        attachFocusChangedListener(phoneTextInputEditText, phoneTextInputLayout);
+        attachFocusChangedListener(universityNameTextInputEditText, universityNameTextInputLayout);
+        attachFocusChangedListener(graduationYearTextInputEditText, graduationYearTextInputLayout);
+        attachFocusChangedListener(expectedSalaryTextInputEditText, expectedSalaryTextInputLayout);
+        attachFocusChangedListener(githubURLTextInputEditText, githubURLTextInputLayout);
+    }
+
+    private void attachFocusChangedListener(TextInputEditText textInputEditText,
+                                            TextInputLayout textInputLayout){
+
+        /* called for required fields only
+         * for the case when TextInputEditText gets focus,
+         * no changes are made and loses focus*/
+
+        textInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                String inputText = ((TextInputEditText) v).getText().toString().trim();
+                if(!hasFocus && inputText.isEmpty()){
+                    /* loses focus and TextInputEditText is empty */
+                    textInputLayout.setError(getString(R.string.field_required_error_msg));
+                }
+            }
+        });
+    }
+
     private Uri getCVFileUri(Intent data){
         Uri contentUri = null;
         if (data != null){
@@ -214,6 +316,14 @@ public class DataInputActivity extends AppCompatActivity {
         return path;
     }
 
+    /* checks if file size is <= 4 MB*/
+    private boolean isFileSizeValid(String filePath){
+        // file size must not be more than 4 MB
+        int maxSize = 4 * 1024 * 1024;
+        File file = new File(filePath);
+        return file.length() <= maxSize;
+    }
+
     private void showCVNameAndImageButton(String filePath){
         File file = new File(filePath);
         cvFileNameTV.setText(file.getName());
@@ -222,13 +332,6 @@ public class DataInputActivity extends AppCompatActivity {
         removeCVFileIB.setVisibility(View.VISIBLE);
         removeCVFileIB.setClickable(true);
         removeCVFileIB.setFocusable(true);
-    }
-
-    private boolean isFileSizeValid(String filePath){
-        // filesize must not be more than 4 MB
-        int maxSize = 4 * 1024 * 1024;
-        File file = new File(filePath);
-        return file.length() <= maxSize;
     }
 
     private void removeCVNameAndImageButton(){
@@ -241,76 +344,51 @@ public class DataInputActivity extends AppCompatActivity {
         isCVSelected = false;
     }
 
-    private void uploadCV(String fileId, String token){
-        if(mFilePath != null){
-            showProgressLayout(R.string.file_upload_progress_text);
-            File file = new File(mFilePath);
-            RequestBody requestBody = RequestBody.create(MediaType.parse("multipart/form-data"), file);
-            // this works too
-            // RequestBody requestBody = RequestBody.create(MediaType.parse("application/pdf"), file);
-            MultipartBody.Part multipartBody = MultipartBody.Part.createFormData("file",
-                    file.getName(), requestBody);
-            Call<FileUploadResponse> call = ApiConfig.getApiInstance().uploadCV(fileId, "Token " + token, multipartBody);
-            call.enqueue(new Callback<FileUploadResponse>() {
-                @Override
-                public void onResponse(Call<FileUploadResponse> call, Response<FileUploadResponse> response) {
-                    hideProgressLayout();
-                    FileUploadResponse fileUploadResponse = response.body();
-                    if(fileUploadResponse != null){
-                        Toast.makeText(DataInputActivity.this, R.string.file_upload_success, Toast.LENGTH_SHORT)
-                                .show();
-                        Log.i("file_upload_response", fileUploadResponse.getMessage());
-                        Log.i("file_upload_tsync", fileUploadResponse.getTsyncId());
-                        Log.i("file_upload_file", fileUploadResponse.getFile());
-                        Log.i("file_upload_ct", Long.toString(fileUploadResponse.getDateCreated()));
-                        Log.i("file_upload_ut", Long.toString(fileUploadResponse.getLastUpdated()));
-                    } else{
-                        Toast.makeText(DataInputActivity.this, R.string.file_upload_failed, Toast.LENGTH_SHORT)
-                                .show();
-                        Gson gson = new Gson();
-                        try {
-                            ErrorBody errorBody = gson.fromJson(response.errorBody().string(), ErrorBody.class);
-                            Log.i("file_upload_problem", errorBody.getMessage());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<FileUploadResponse> call, Throwable t) {
-                    hideProgressLayout();
-                    Toast.makeText(DataInputActivity.this, R.string.file_upload_failed, Toast.LENGTH_SHORT)
-                            .show();
-                    Log.i("file_upload_fail_reason", t.getMessage());
-                    Log.i("file_upload", "failed");
-                }
-            });
+    /* get the time when the user data was first uploaded to FieldBuzz server
+    *  in case it's the first time return current timestamp in milliseconds
+    *  and save it to the shared preferences*/
+    private Long getCreationTime(){
+        SharedPreferences sharedPreferences = getSharedPreferences(this.getString(R.string.creation_time_sp),
+                Context.MODE_PRIVATE);
+        long creationTime = sharedPreferences.getLong("creation_time", -1L);
+        if(creationTime == -1L){
+            long time = System.currentTimeMillis();
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putLong("creation_time", time);
+            editor.apply();
+            return time;
         }
-
+        return creationTime;
     }
 
-    public void viewClicked(View view) {
-        if(view.getId() == R.id.submit_button){
-            boolean areInputsValid = validateInputs();
-            if(areInputsValid){
-                showProgressLayout(R.string.data_upload_progress_text);
-                sendPayload(token);
-            }
-        } else if(view.getId() == R.id.cv_file_nameTV){
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED){
-                // Permission not available
-                // ask for permission
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        READ_EXTERNAL_STORAGE_PERM_CODE);
-            } else{
-                // permission available
-                startCVChooseActivity();
-            }
-        } else if(view.getId() == R.id.remove_file_imageButton){
-            removeCVNameAndImageButton();
-        }
+    private Payload getPayload(){
+        Payload payload = new Payload();
+
+        UniqueID uniqueID = new UniqueID(this, UniqueIDTypes.PERSON);
+        payload.setTsyncId(uniqueID.getUniqueID());
+
+        payload.setName(nameTextInputEditText.getText().toString());
+        payload.setEmail(emailTextInputEditText.getText().toString());
+        payload.setPhone(phoneTextInputEditText.getText().toString());
+        payload.setFullAddress(addressTextInputEditText.getText().toString());
+        payload.setNameOfUniversity(universityNameTextInputEditText.getText().toString());
+        payload.setGraduationYear(graduationYearTextInputEditText.getText().toString());
+        payload.setCgpa(cgpaTextInputEditText.getText().toString());
+        payload.setExperienceInMonths(experienceTextInputEditText.getText().toString());
+        payload.setCurrentWorkPlaceName(currentWorkTextInputEditText.getText().toString());
+        payload.setApplyingIn(jobPositionSpinner.getSelectedItem().toString());
+        payload.setExpectedSalary(Integer.parseInt(expectedSalaryTextInputEditText.getText().toString()));
+        payload.setFieldBuzzReference(fbRefTextInputEditText.getText().toString());
+        payload.setGithubProjectUrl(githubURLTextInputEditText.getText().toString());
+
+        CvFile cv_file = new CvFile();
+        uniqueID.setType(UniqueIDTypes.CV_FILE);
+        cv_file.setTsyncId(uniqueID.getUniqueID());
+
+        payload.setCvFile(cv_file);
+        payload.setOnSpotCreationTime(getCreationTime());
+        payload.setOnSpotUpdateTime();
+        return payload;
     }
 
     private void sendPayload(String token){
@@ -370,145 +448,53 @@ public class DataInputActivity extends AppCompatActivity {
         });
     }
 
-    private Payload getPayload(){
-        Payload payload = new Payload();
-
-        UniqueID uniqueID = new UniqueID(this, UniqueIDTypes.PERSON);
-        payload.setTsyncId(uniqueID.getUniqueID());
-
-        payload.setName(nameTextInputEditText.getText().toString());
-        payload.setEmail(emailTextInputEditText.getText().toString());
-        payload.setPhone(phoneTextInputEditText.getText().toString());
-        payload.setFullAddress(addressTextInputEditText.getText().toString());
-        payload.setNameOfUniversity(universityNameTextInputEditText.getText().toString());
-        payload.setGraduationYear(graduationYearTextInputEditText.getText().toString());
-        payload.setCgpa(cgpaTextInputEditText.getText().toString());
-        payload.setExperienceInMonths(experienceTextInputEditText.getText().toString());
-        payload.setCurrentWorkPlaceName(currentWorkTextInputEditText.getText().toString());
-        payload.setApplyingIn(jobPositionSpinner.getSelectedItem().toString());
-        payload.setExpectedSalary(Integer.parseInt(expectedSalaryTextInputEditText.getText().toString()));
-        payload.setFieldBuzzReference(fbRefTextInputEditText.getText().toString());
-        payload.setGithubProjectUrl(githubURLTextInputEditText.getText().toString());
-
-        CvFile cv_file = new CvFile();
-        uniqueID.setType(UniqueIDTypes.CV_FILE);
-        cv_file.setTsyncId(uniqueID.getUniqueID());
-
-        payload.setCvFile(cv_file);
-        payload.setOnSpotCreationTime(getCreationTime());
-        payload.setOnSpotUpdateTime();
-        return payload;
-    }
-
-    private Long getCreationTime(){
-        SharedPreferences sharedPreferences = getSharedPreferences(this.getString(R.string.creation_time_sp),
-                Context.MODE_PRIVATE);
-        long creationTime = sharedPreferences.getLong("creation_time", -1L);
-        if(creationTime == -1L){
-            long time = System.currentTimeMillis();
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putLong("creation_time", time);
-            editor.apply();
-            return time;
-        }
-        return creationTime;
-    }
-
-    private void bindSpinner(Spinner spinner, int stringArrayResId){
-        String[] jobRoles = getResources().getStringArray(stringArrayResId);
-        ArrayAdapter<String> jobRolesAdapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_dropdown_item, jobRoles);
-
-        spinner.setAdapter(jobRolesAdapter);
-    }
-
-    private void attachTextChangedListeners(){
-
-        /* attach textChangedListeners to all TextInputEditTexts
-        * except those which are not required and does not need
-        * further validation if provided */
-
-        attachTextChangedListener(nameTextInputEditText, nameTextInputLayout, new NameValidator());
-        attachTextChangedListener(emailTextInputEditText, emailTextInputLayout, new EmailValidator());
-        attachTextChangedListener(phoneTextInputEditText, phoneTextInputLayout, new PhoneValidator());
-        attachTextChangedListener(universityNameTextInputEditText, universityNameTextInputLayout, new UniversityNameValidator());
-        attachTextChangedListener(graduationYearTextInputEditText, graduationYearTextInputLayout, new GraduationYearValidator());
-        attachTextChangedListener(cgpaTextInputEditText, cgpaTextInputLayout, new CGPAValidator());
-        attachTextChangedListener(experienceTextInputEditText, experienceTextInputLayout, new ExperienceValidator());
-        attachTextChangedListener(expectedSalaryTextInputEditText, expectedSalaryTextInputLayout, new ExpectedSalaryValidator());
-        attachTextChangedListener(githubURLTextInputEditText, githubURLTextInputLayout, new GithubURLValidator());
-    }
-
-    private void attachTextChangedListener(TextInputEditText textInputEditText,
-                                           TextInputLayout textInputLayout,
-                                           IInputValidator inputValidator){
-        textInputEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                String input = s.toString();
-                validateField(input, textInputLayout, inputValidator);
-            }
-        });
-    }
-
-    private void attachFocusChangedListeners(){
-
-        /* call attachFocusChangedListener for required fields */
-
-        attachFocusChangedListener(nameTextInputEditText, nameTextInputLayout);
-        attachFocusChangedListener(emailTextInputEditText, emailTextInputLayout);
-        attachFocusChangedListener(phoneTextInputEditText, phoneTextInputLayout);
-        attachFocusChangedListener(universityNameTextInputEditText, universityNameTextInputLayout);
-        attachFocusChangedListener(graduationYearTextInputEditText, graduationYearTextInputLayout);
-        attachFocusChangedListener(expectedSalaryTextInputEditText, expectedSalaryTextInputLayout);
-        attachFocusChangedListener(githubURLTextInputEditText, githubURLTextInputLayout);
-    }
-
-    private void attachFocusChangedListener(TextInputEditText textInputEditText,
-                                           TextInputLayout textInputLayout){
-
-        /* called for required fields only
-        * for the case when TextInputEditText gets focus,
-        * no changes are made and loses focus*/
-
-        textInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                String inputText = ((TextInputEditText) v).getText().toString().trim();
-                if(!hasFocus && inputText.isEmpty()){
-                    /* loses focus and TextInputEditText is empty */
-                    textInputLayout.setError(getString(R.string.field_required_error_msg));
+    private void uploadCV(String fileId, String token){
+        if(mFilePath != null){
+            showProgressLayout(R.string.file_upload_progress_text);
+            File file = new File(mFilePath);
+            RequestBody requestBody = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+            // this works too
+            // RequestBody requestBody = RequestBody.create(MediaType.parse("application/pdf"), file);
+            MultipartBody.Part multipartBody = MultipartBody.Part.createFormData("file",
+                    file.getName(), requestBody);
+            Call<FileUploadResponse> call = ApiConfig.getApiInstance().uploadCV(fileId, "Token " + token, multipartBody);
+            call.enqueue(new Callback<FileUploadResponse>() {
+                @Override
+                public void onResponse(Call<FileUploadResponse> call, Response<FileUploadResponse> response) {
+                    hideProgressLayout();
+                    FileUploadResponse fileUploadResponse = response.body();
+                    if(fileUploadResponse != null){
+                        Toast.makeText(DataInputActivity.this, R.string.file_upload_success, Toast.LENGTH_SHORT)
+                                .show();
+                        Log.i("file_upload_response", fileUploadResponse.getMessage());
+                        Log.i("file_upload_tsync", fileUploadResponse.getTsyncId());
+                        Log.i("file_upload_file", fileUploadResponse.getFile());
+                        Log.i("file_upload_ct", Long.toString(fileUploadResponse.getDateCreated()));
+                        Log.i("file_upload_ut", Long.toString(fileUploadResponse.getLastUpdated()));
+                    } else{
+                        Toast.makeText(DataInputActivity.this, R.string.file_upload_failed, Toast.LENGTH_SHORT)
+                                .show();
+                        Gson gson = new Gson();
+                        try {
+                            ErrorBody errorBody = gson.fromJson(response.errorBody().string(), ErrorBody.class);
+                            Log.i("file_upload_problem", errorBody.getMessage());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
-            }
-        });
-    }
 
-    private boolean validateField(String input, TextInputLayout textInputLayout, IInputValidator inputValidator){
-        boolean isValid = inputValidator.isValid(input);
-        if(isValid){
-            textInputLayout.setError(null);
-            return true;
-        }else{
-            textInputLayout.setError(getString(inputValidator.getErrorMsgResID()));
-            return false;
+                @Override
+                public void onFailure(Call<FileUploadResponse> call, Throwable t) {
+                    hideProgressLayout();
+                    Toast.makeText(DataInputActivity.this, R.string.file_upload_failed, Toast.LENGTH_SHORT)
+                            .show();
+                    Log.i("file_upload_fail_reason", t.getMessage());
+                    Log.i("file_upload", "failed");
+                }
+            });
         }
-    }
 
-    private boolean verifyCVFileSelected(){
-        if(!isCVSelected){
-            Toast.makeText(this, R.string.cv_missing_error_msg, Toast.LENGTH_LONG).show();
-        }
-        return isCVSelected;
     }
 
     private boolean validateInputs(){
@@ -541,6 +527,24 @@ public class DataInputActivity extends AppCompatActivity {
                 new GithubURLValidator());
         bool = bool & verifyCVFileSelected();
         return bool;
+    }
+
+    private boolean validateField(String input, TextInputLayout textInputLayout, IInputValidator inputValidator){
+        boolean isValid = inputValidator.isValid(input);
+        if(isValid){
+            textInputLayout.setError(null);
+            return true;
+        }else{
+            textInputLayout.setError(getString(inputValidator.getErrorMsgResID()));
+            return false;
+        }
+    }
+
+    private boolean verifyCVFileSelected(){
+        if(!isCVSelected){
+            Toast.makeText(this, R.string.cv_missing_error_msg, Toast.LENGTH_LONG).show();
+        }
+        return isCVSelected;
     }
 
     private void startCVChooseActivity(){
