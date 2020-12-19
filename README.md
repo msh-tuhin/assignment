@@ -19,7 +19,7 @@ This app has been tested in following devices:
 
 <ol>
 <li>HUAWEI P30 lite (Android 10)</li>
-<li>Xiaomi</li> 
+<li>Xiaomi Redmi 9A ( Android 10)</li> 
 <li>Samsung Galaxy S5 mini (Android 6.0.1)</li>
 <li>Lenovo K6 note (Android 7)</li>
 </ol>
